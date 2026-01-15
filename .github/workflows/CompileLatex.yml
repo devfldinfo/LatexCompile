@@ -3,13 +3,11 @@ name: Compile and commit all LaTeX PDFs
 on:
   push:
     branches: [ main ]
-  pull_request:
   workflow_dispatch:
 
 jobs:
   build-latex:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
@@ -19,44 +17,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install LaTeX
+      - name: Install LaTeX (Unicode-safe)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            texlive-latex-base \
-            texlive-latex-recommended \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
+            texlive-full \
             latexmk
 
-      - name: Compile all LaTeX files
+      - name: Compile all LaTeX files (robust)
         run: |
-          set -e
-          find . -name "*.tex" -type f | while read texfile; do
+          FAILED=0
+
+          find . -name "*.tex" -type f -print0 | while IFS= read -r -d '' texfile; do
             dir="$(dirname "$texfile")"
             file="$(basename "$texfile")"
 
             echo "Compiling $texfile"
+
             latexmk \
-              -pdf \
+              -xelatex \
               -interaction=nonstopmode \
               -halt-on-error \
               -cd \
-              "$dir/$file"
+              "$dir/$file" || FAILED=1
           done
+
+          exit $FAILED
 
       - name: Clean auxiliary files
         run: |
-          find . -name "*.aux" -delete
-          find . -name "*.log" -delete
-          find . -name "*.out" -delete
-          find . -name "*.fls" -delete
-          find . -name "*.fdb_latexmk" -delete
+          find . -type f \( \
+            -name "*.aux" -o \
+            -name "*.log" -o \
+            -name "*.out" -o \
+            -name "*.fls" -o \
+            -name "*.fdb_latexmk" \
+          \) -delete
 
       - name: Commit generated PDFs
         run: |
-          set -e
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -65,5 +64,5 @@ jobs:
             git commit -m "Auto-compile LaTeX PDFs"
             git push
           else
-            echo "No PDF changes to commit"
+            echo "No PDFs generated"
           fi
