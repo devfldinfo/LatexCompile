@@ -8,7 +8,6 @@ on:
 jobs:
   build-latex:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
@@ -18,14 +17,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Compile all LaTeX files (XeLaTeX)
         shell: bash
         run: |
-          FAILED=0
+          cd "$GITHUB_WORKSPACE"
 
+          FAILED=0
           find . -name "*.tex" -type f -print0 | while IFS= read -r -d '' texfile; do
             dir="$(dirname "$texfile")"
             file="$(basename "$texfile")"
@@ -44,6 +42,7 @@ jobs:
 
       - name: Clean auxiliary files
         run: |
+          cd "$GITHUB_WORKSPACE"
           find . -type f \( \
             -name "*.aux" -o \
             -name "*.log" -o \
@@ -54,6 +53,8 @@ jobs:
 
       - name: Commit generated PDFs
         run: |
+          cd "$GITHUB_WORKSPACE"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
