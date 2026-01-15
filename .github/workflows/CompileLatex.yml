@@ -1,0 +1,49 @@
+name: Compile all LaTeX files
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-latex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            latexmk
+
+      - name: Compile all LaTeX files
+        run: |
+          set -e
+          find . -name "*.tex" -type f | while read texfile; do
+            dir="$(dirname "$texfile")"
+            file="$(basename "$texfile")"
+
+            echo "Compiling $texfile"
+            latexmk \
+              -pdf \
+              -interaction=nonstopmode \
+              -halt-on-error \
+              -cd \
+              "$dir/$file"
+          done
+
+      - name: Clean auxiliary files
+        run: |
+          find . -name "*.aux" -delete
+          find . -name "*.log" -delete
+          find . -name "*.out" -delete
+          find . -name "*.fls" -delete
+          find . -name "*.fdb_latexmk" -delete
