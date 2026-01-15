@@ -1,33 +1,39 @@
-name: Compile and commit all LaTeX PDFs (Docker)
+name: Compile LaTeX Files
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - 'input/start.start'
+  pull_request:
+    paths:
+      - 'input/start.start'
   workflow_dispatch:
 
-jobs:
-  build-latex:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+permissions:
+  contents: write
 
-    container:
-      image: ghcr.io/xu-cheng/texlive-full:latest
+jobs:
+  compile:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Install git (required for checkout)
-        run: |
-          apt-get update
-          apt-get install -y git
-
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Compile all LaTeX files (XeLaTeX)
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-xetex \
+            texlive-bibtex-extra \
+            biber \
+            latexmk
+
+      - name: Compile LaTeX files in-place
         shell: bash
-        working-directory: ${{ github.workspace }}
         run: |
           FAILED=0
 
@@ -47,27 +53,26 @@ jobs:
 
           exit $FAILED
 
-      - name: Clean auxiliary files
-        working-directory: ${{ github.workspace }}
+      - name: Delete temporary LaTeX files
         run: |
           find . -type f \( \
             -name "*.aux" -o \
             -name "*.log" -o \
+            -name "*.lof" -o \
+            -name "*.lot" -o \
+            -name "*.toc" -o \
+            -name "*.bbl" -o \
+            -name "*.blg" -o \
             -name "*.out" -o \
+            -name "*.synctex.gz" -o \
+            -name "*.fdb_latexmk" -o \
             -name "*.fls" -o \
-            -name "*.fdb_latexmk" \
+            -name "*.bcf" -o \
+            -name "*.run.xml" \
           \) -delete
 
-      - name: Commit generated PDFs
-        working-directory: ${{ github.workspace }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if git status --porcelain | grep -E '\.pdf$'; then
-            git add '**/*.pdf'
-            git commit -m "Auto-compile LaTeX PDFs"
-            git push
-          else
-            echo "No PDF changes to commit"
-          fi
+      - name: Auto Commit PDFs
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Auto-compile LaTeX PDFs"
+          file_pattern: '**/*.pdf'
