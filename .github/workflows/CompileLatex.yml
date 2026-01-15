@@ -1,4 +1,4 @@
-name: Compile all LaTeX files
+name: Compile and commit all LaTeX PDFs
 
 on:
   push:
@@ -10,9 +10,14 @@ jobs:
   build-latex:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install LaTeX
         run: |
@@ -47,3 +52,18 @@ jobs:
           find . -name "*.out" -delete
           find . -name "*.fls" -delete
           find . -name "*.fdb_latexmk" -delete
+
+      - name: Commit generated PDFs
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git status --porcelain | grep -E '\.pdf$'; then
+            git add '**/*.pdf'
+            git commit -m "Auto-compile LaTeX PDFs"
+            git push
+          else
+            echo "No PDF changes to commit"
+          fi
