@@ -15,15 +15,22 @@ jobs:
       image: ghcr.io/xu-cheng/texlive-full:latest
 
     steps:
+      - name: Install git (required for checkout)
+        run: |
+          apt-get update
+          apt-get install -y git
+
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Compile all LaTeX files (XeLaTeX)
         shell: bash
+        working-directory: ${{ github.workspace }}
         run: |
-          cd "$GITHUB_WORKSPACE"
-
           FAILED=0
+
           find . -name "*.tex" -type f -print0 | while IFS= read -r -d '' texfile; do
             dir="$(dirname "$texfile")"
             file="$(basename "$texfile")"
@@ -41,8 +48,8 @@ jobs:
           exit $FAILED
 
       - name: Clean auxiliary files
+        working-directory: ${{ github.workspace }}
         run: |
-          cd "$GITHUB_WORKSPACE"
           find . -type f \( \
             -name "*.aux" -o \
             -name "*.log" -o \
@@ -52,9 +59,8 @@ jobs:
           \) -delete
 
       - name: Commit generated PDFs
+        working-directory: ${{ github.workspace }}
         run: |
-          cd "$GITHUB_WORKSPACE"
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
