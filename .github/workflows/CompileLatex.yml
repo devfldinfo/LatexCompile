@@ -1,4 +1,4 @@
-name: Compile and commit all LaTeX PDFs
+name: Compile and commit all LaTeX PDFs (Docker)
 
 on:
   push:
@@ -8,8 +8,12 @@ on:
 jobs:
   build-latex:
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
+
+    container:
+      image: ghcr.io/xu-cheng/texlive-full:latest
 
     steps:
       - name: Checkout repository
@@ -17,14 +21,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install LaTeX (Unicode-safe)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            texlive-full \
-            latexmk
-
-      - name: Compile all LaTeX files (robust)
+      - name: Compile all LaTeX files (XeLaTeX)
+        shell: bash
         run: |
           FAILED=0
 
@@ -64,5 +62,5 @@ jobs:
             git commit -m "Auto-compile LaTeX PDFs"
             git push
           else
-            echo "No PDFs generated"
+            echo "No PDF changes to commit"
           fi
