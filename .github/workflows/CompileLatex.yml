@@ -19,6 +19,20 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and commit inprogress.txt
+        shell: bash
+        run: |
+          echo "Workflow started at $(date -u)" > inprogress.txt
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add inprogress.txt
+          git commit -m "CI: mark workflow in progress"
+          git push
 
       - name: Install LaTeX
         run: |
@@ -76,3 +90,16 @@ jobs:
         with:
           commit_message: "Auto-compile LaTeX PDFs"
           file_pattern: '**/*.pdf'
+
+      - name: Remove inprogress.txt (always)
+        if: always()
+        shell: bash
+        run: |
+          if [ -f inprogress.txt ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            git rm -f inprogress.txt
+            git commit -m "CI: clear in-progress marker"
+            git push
+          fi
