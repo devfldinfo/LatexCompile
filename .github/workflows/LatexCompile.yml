@@ -22,6 +22,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Abort unless start.txt was added
+        shell: bash
+        run: |
+          set -e
+
+          # Only evaluate for push / PR events
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            exit 0
+          fi
+
+          # Get changed files
+          git diff --name-status ${{ github.event.before }} ${{ github.sha }} > changes.txt
+
+          echo "Changed files:"
+          cat changes.txt
+
+          # Look for ADDED start.txt only
+          if ! grep -E '^A\s+.*start\.txt$' changes.txt; then
+            echo "start.txt was not added. Exiting."
+            exit 78
+          fi
+
       - name: Mark workflow in progress
         shell: bash
         run: |
