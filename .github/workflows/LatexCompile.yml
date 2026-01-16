@@ -1,0 +1,94 @@
+name: Compile LaTeX Files
+
+on:
+  push:
+    paths:
+      - '**/start.txt'
+  pull_request:
+    paths:
+      - '**/start.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and commit inprogress.txt
+        shell: bash
+        run: |
+          echo "Workflow started at $(date -u)" > inprogress.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add inprogress.txt
+          git commit -m "CI: mark workflow in progress"
+          git push
+      - name: Install LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-xetex \
+            texlive-bibtex-extra \
+            biber \
+            latexmk
+      - name: Compile LaTeX files in-place
+        shell: bash
+        run: |
+          FAILED=0
+          find . -name "*.tex" -type f -print0 | while IFS= read -r -d '' texfile; do
+            dir="$(dirname "$texfile")"
+            file="$(basename "$texfile")"
+            echo "Compiling $texfile"
+            latexmk \
+              -xelatex \
+              -interaction=nonstopmode \
+              -halt-on-error \
+              -cd \
+              "$dir/$file" || FAILED=1
+          done
+          exit $FAILED
+      - name: Delete temporary LaTeX files
+        run: |
+          find . -type f \( \
+            -name "*.aux" -o \
+            -name "*.log" -o \
+            -name "*.lof" -o \
+            -name "*.lot" -o \
+            -name "*.toc" -o \
+            -name "*.bbl" -o \
+            -name "*.blg" -o \
+            -name "*.out" -o \
+            -name "*.synctex.gz" -o \
+            -name "*.fdb_latexmk" -o \
+            -name "*.fls" -o \
+            -name "*.bcf" -o \
+            -name "*.run.xml" \
+          \) -delete
+      - name: Auto Commit PDFs
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Auto-compile LaTeX PDFs"
+          file_pattern: '**/*.pdf'
+
+      - name: Remove inprogress.txt (always)
+        if: always()
+        shell: bash
+        run: |
+          if [ -f inprogress.txt ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git rm -f inprogress.txt
+            git commit -m "CI: clear in-progress marker"
+            git push
+          fi
