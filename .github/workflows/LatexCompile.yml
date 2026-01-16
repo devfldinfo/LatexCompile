@@ -81,15 +81,6 @@ jobs:
           commit_message: "Auto-compile LaTeX PDFs"
           file_pattern: '**/*.pdf'
 
-      - name: Remove inprogress.txt (always)
-        if: always()
-        shell: bash
-        run: |
-          if [ -f inprogress.txt ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git rm -f inprogress.txt
-
       - name: Mark workflow completed
         if: always()
         run: |
