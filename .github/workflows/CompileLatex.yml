@@ -3,10 +3,10 @@ name: Compile LaTeX Files
 on:
   push:
     paths:
-      - 'input/start.start'
+      - '**/start.txt'
   pull_request:
     paths:
-      - 'input/start.start'
+      - '**/start.txt'
   workflow_dispatch:
 
 permissions:
