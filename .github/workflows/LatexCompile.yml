@@ -89,6 +89,17 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git rm -f inprogress.txt
+
+      - name: Mark workflow completed
+        if: always()
+        run: |
+          echo "Workflow completed at $(date -u)" > completed.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add completed.txt
+          git commit -m "Mark workflow completed" || echo "Nothing to commit"
+          git push
+      
             git commit -m "CI: clear in-progress marker"
             git push
           fi
