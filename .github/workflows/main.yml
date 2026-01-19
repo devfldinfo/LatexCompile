@@ -13,4 +13,4 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -d "{\"jobId\":\"test-job-123\"}" \
-            https://script.google.com/macros/s/AKfycbynsQ-DcPDl57Oa-Hy6pUpdS4gPE8kBmBlUFIBQgu4/dev
+   https://script.google.com/macros/s/AKfycbxKcivNDwRAZ4DiLdf--z_s1UQRhue8c0SDPVCk-nCUvm6qlSMD4ZEJJt9tl5JYpCMz/exec
