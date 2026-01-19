@@ -124,4 +124,4 @@ jobs:
           curl -X POST \
           -H "Content-Type: application/json" \
           -d '{"jobId":"${{ github.run_id }}"}' \
-          https://https://script.google.com/macros/s/AKfycbxa90oFb_-rSMmUooOEFTZcKc7jPTbWqS6nB4g9evm9MRlzGYVT3KFQy189fLJA6N6s/exec
+          https://script.google.com/macros/s/AKfycbxa90oFb_-rSMmUooOEFTZcKc7jPTbWqS6nB4g9evm9MRlzGYVT3KFQy189fLJA6N6s/exec
