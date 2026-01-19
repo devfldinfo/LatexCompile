@@ -3,10 +3,10 @@ name: Compile LaTeX Files
 on:
   push:
     paths:
-      - '**/start.txt'
+      - '**/*.tex'
   pull_request:
     paths:
-      - '**/start.txt'
+      - '**/*.tex'
   workflow_dispatch:
 
 permissions:
@@ -39,8 +39,8 @@ jobs:
           cat changes.txt
 
           # Look for ADDED start.txt only
-          if ! grep -E '^A\s+.*start\.txt$' changes.txt; then
-            echo "start.txt was not added. Exiting."
+          if ! grep -E '^A\s+.*\.tex$' changes.txt; then
+            echo ".tex was not added. Exiting."
             exit 78
           fi
 
