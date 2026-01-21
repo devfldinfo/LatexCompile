@@ -11,7 +11,6 @@ on:
       - '**/*.tEX'
       - '**/*.TeX'
       - '**/*.TEX'
-      
   pull_request:
     paths:
       - '**/*.tex'
@@ -22,7 +21,6 @@ on:
       - '**/*.tEX'
       - '**/*.TeX'
       - '**/*.TEX'
-
   workflow_dispatch:
 
 permissions:
@@ -38,25 +36,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Abort unless .tex was added
+      - name: Abort unless a .tex file was added
         shell: bash
         run: |
           set -e
 
-          # Only evaluate for push / PR events
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             exit 0
           fi
 
-          # Get changed files
           git diff --name-status ${{ github.event.before }} ${{ github.sha }} > changes.txt
 
           echo "Changed files:"
           cat changes.txt
 
-          # Look for ADDED .tex only
           if ! grep -Ei '^A\s+.*\.tex$' changes.txt; then
-            echo ".tex was not added. Exiting."
+            echo "No .tex file added. Exiting."
             exit 78
           fi
 
@@ -72,22 +67,24 @@ jobs:
             biber \
             latexmk
 
-      - name: Compile LaTeX files in-place
+      - name: Compile LaTeX root documents only
         shell: bash
         run: |
-          FAILED=0
-          find . -type f \( -iname "*.tex" \) -print0 | while IFS= read -r -d '' texfile; do
-            dir="$(dirname "$texfile")"
-            file="$(basename "$texfile")"
+          set -e
+
+          while IFS= read -r -d '' texfile; do
+            if ! grep -qi '\\documentclass' "$texfile"; then
+              echo "Skipping non-root file: $texfile"
+              continue
+            fi
+
             echo "Compiling $texfile"
             latexmk \
               -xelatex \
               -interaction=nonstopmode \
               -halt-on-error \
-              -cd \
-              "$dir/$file" || FAILED=1
-          done
-          exit $FAILED
+              "$texfile"
+          done < <(find . -type f -iname "*.tex" -print0)
 
       - name: Delete temporary LaTeX files
         run: |
@@ -117,6 +114,7 @@ jobs:
         if: always()
         shell: bash
         run: |
+          mkdir -p input
           echo "Workflow completed at $(date -u)" > input/completed.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
