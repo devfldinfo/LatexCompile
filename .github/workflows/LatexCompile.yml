@@ -4,9 +4,25 @@ on:
   push:
     paths:
       - '**/*.tex'
+      - '**/*.Tex'
+      - '**/*.tEx'
+      - '**/*.teX'
+      - '**/*.TEx'
+      - '**/*.tEX'
+      - '**/*.TeX'
+      - '**/*.TEX'
+      
   pull_request:
     paths:
       - '**/*.tex'
+      - '**/*.Tex'
+      - '**/*.tEx'
+      - '**/*.teX'
+      - '**/*.TEx'
+      - '**/*.tEX'
+      - '**/*.TeX'
+      - '**/*.TEX'
+
   workflow_dispatch:
 
 permissions:
@@ -39,7 +55,7 @@ jobs:
           cat changes.txt
 
           # Look for ADDED .tex only
-          if ! grep -E '^A\s+.*\.tex$' changes.txt; then
+          if ! grep -Ei '^A\s+.*\.tex$' changes.txt; then
             echo ".tex was not added. Exiting."
             exit 78
           fi
@@ -60,7 +76,7 @@ jobs:
         shell: bash
         run: |
           FAILED=0
-          find . -name "*.tex" -type f -print0 | while IFS= read -r -d '' texfile; do
+          find . -type f \( -iname "*.tex" \) -print0 | while IFS= read -r -d '' texfile; do
             dir="$(dirname "$texfile")"
             file="$(basename "$texfile")"
             echo "Compiling $texfile"
