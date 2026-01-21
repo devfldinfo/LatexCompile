@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Abort unless start.txt was added
+      - name: Abort unless .tex was added
         shell: bash
         run: |
           set -e
@@ -38,22 +38,11 @@ jobs:
           echo "Changed files:"
           cat changes.txt
 
-          # Look for ADDED start.txt only
+          # Look for ADDED .tex only
           if ! grep -E '^A\s+.*\.tex$' changes.txt; then
             echo ".tex was not added. Exiting."
             exit 78
           fi
-
-      - name: Mark workflow in progress
-        shell: bash
-        run: |
-          mkdir -p input
-          echo "Workflow started at $(date -u)" > input/inprogress.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add input/inprogress.txt
-          git commit -m "Mark workflow in progress" || echo "Nothing to commit"
-          git push
 
       - name: Install LaTeX
         run: |
@@ -118,10 +107,3 @@ jobs:
           git add input/completed.txt
           git commit -m "Mark workflow completed" || echo "Nothing to commit"
           git push
-
-      - name: Notify Google Apps Script
-        run: |
-          curl -X POST \
-          -H "Content-Type: application/json" \
-          -d '{"jobId":"${{ github.run_id }}"}' \
-          https://script.google.com/macros/s/AKfycbxa90oFb_-rSMmUooOEFTZcKc7jPTbWqS6nB4g9evm9MRlzGYVT3KFQy189fLJA6N6s/exec
