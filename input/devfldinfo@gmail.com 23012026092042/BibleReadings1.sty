@@ -1,0 +1,592 @@
+\ProvidesPackage{BibleReadings1}
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage{color}
+\newcommand{\border}[0]{8mm}
+\newcommand{\PrintWaterMark}{}
+\newcommand{\WaterMark}[0]{\renewcommand{\PrintWaterMark}{\sc@wm@print{\sc@watermark}}}
+\newlength\sc@wm@fontsize
+\def\sc@wm@angle{45}
+\def\sc@wm@colormodel{[gray]}
+\def\sc@wm@colorspecs{0.85}
+\def\sc@wm@scale{0.7}
+\setlength\sc@wm@fontsize{5cm}
+\newcommand\sc@watermark{%
+  \setlength{\@tempdimb}{8cm}%.5\paperwidth}%
+  \setlength{\@tempdimc}{15cm}%-.5\paperheight}%
+  \put(\strip@pt\@tempdimb,\strip@pt\@tempdimc){%
+    \makebox(0,0){\rotatebox{\sc@wm@angle}{%
+        \scalebox{\sc@wm@scale}{%
+          \expandafter\expandafter\expandafter\textcolor
+          \expandafter\sc@wm@colormodel\expandafter{\sc@wm@colorspecs}
+{%
+            \fontsize{\sc@wm@fontsize}{1.2\sc@wm@fontsize}
+            \selectfont
+            DRAFT}}}}}}
+\newcommand\sc@wm@print[1]{%
+  \setbox\@tempboxa\vbox to \z@{%
+    \vskip -1in \moveleft 1in \vbox{%
+      \hbox to \z@{%
+        #1\hss}}\vss}
+  \dp\@tempboxa\z@
+  \box\@tempboxa}
+
+\newcommand{\SmallPage}[0]{
+\newcommand{\oneSideBoxWidth}[0]{273mm}
+\newcommand{\BoxHeight}[0]{186mm} %132*2=264+16=280+16=296
+\newcommand{\SunWidth}[0]{96mm}
+\newcommand{\WedWidth}[0]{153mm} %110+68=178+16=194+16=210
+\newcommand{\WorkingPageWidth}[0]{273mm} %132*2=264+16=280+16=296
+\usepackage[
+	paperwidth=297mm,
+	paperheight=210mm,
+	top=12mm,
+	bottom=12mm,
+	left=12mm,
+	right=12mm,
+	nofoot, footskip=0pt,footnotesep=1pt]
+{geometry}
+}
+\newcommand{\LargePage}[0]{
+\newcommand{\oneSideBoxWidth}[0]{198mm}
+\newcommand{\BoxHeight}[0]{136mm} %132*2=264+16=280+16=296
+\newcommand{\SunWidth}[0]{72mm}
+\newcommand{\WedWidth}[0]{114mm} %110+68=178+16=194+16=210
+\newcommand{\WorkingPageWidth}[0]{198mm} %132*2=264+16=280+16=296
+\usepackage[
+	paperwidth=210mm,
+	paperheight=297mm,
+	top=6mm,
+	bottom=6mm,
+	left=6mm,
+	right=6mm,
+	nofoot, footskip=0pt,footnotesep=1pt]
+{geometry}
+}
+
+% Renew these commands
+\newcommand{\SunA}[0]{}
+\newcommand{\SunB}[0]{}
+\newcommand{\WedA}[0]{}
+\newcommand{\WedB}[0]{}
+\newcommand{\EndNoteWedA}{}
+\newcommand{\EndNoteWedB}{}
+
+\newcommand{\SunTopicDim}[0]{}
+		
+\newcommand{\SelectMainFont}[0]{%
+%\usefont{T1}{fds}{m}{n}
+%\usefont{T1}{pag}{m}{n}
+\usefont{T1}{phv}{m}{n}
+}
+\newcommand{\mf}[0]{\SelectMainFont}
+
+\newcommand{\SelectNumberFont}[0]{%
+\usefont{T1}{fds}{m}{n}
+%\usefont{T1}{pag}{m}{n}
+}
+\newcommand{\SelectBoldNumberFont}[0]{%
+\usefont{T1}{fds}{b}{n}
+%\usefont{T1}{pag}{b}{n}
+}
+
+%\newbox\testColWidth
+
+\newdimen\SunADateDayDim
+\newdimen\SunADateMonthDim
+\newdimen\SunABookDim
+\newdimen\SunATopicDim
+\newdimen\SunAChapterDim
+
+\newcommand{\SunAColWidths}[4]{
+\SelectMainFont
+\UpdateDimMeasure{\SunADateDayDim}{\hbox{#1}}
+\UpdateDimMeasure{\SunADateMonthDim}{\hbox{#2}}
+\UpdateDimMeasure{\SunABookDim }{\hbox{#3}}
+\UpdateDimMeasure{\SunATopicDim}{\hbox{\textbf{#4}}}
+}
+
+\newdimen\SunBDateDayDim
+\newdimen\SunBDateMonthDim
+\newdimen\SunBBookDim
+\newdimen\SunBChapterDim
+\newdimen\SunBTopicDim
+
+\newcommand{\SunBColWidths}[4]{
+\SelectMainFont
+\UpdateDimMeasure{\SunBDateDayDim}{\hbox{#1}}
+\UpdateDimMeasure{\SunBDateMonthDim}{\hbox{#2}}
+\UpdateDimMeasure{\SunBBookDim }{\hbox{#3}}
+\UpdateDimMeasure{\SunBTopicDim}{\hbox{\textbf{#4}}}
+}
+\newdimen\SunTopicDim
+
+\newcommand{\setSunATopicCalcChapterDim}[0]{
+\SunTopicDim = \SunATopicDim
+\SunAChapterDim=\SunTopicDim
+\advance \SunAChapterDim by -\SunABookDim
+\advance \SunAChapterDim by -0.5\padWidth
+}
+
+\newcommand{\setSunBTopicCalcChapterDim}[0]{
+\SunTopicDim = \SunBTopicDim
+\SunBChapterDim=\SunTopicDim
+\advance \SunBChapterDim by -\SunBBookDim
+\advance \SunBChapterDim by -0.5\padWidth
+}
+
+\newdimen\WedADateDayDim
+\newdimen\WedADateMonthDim
+\newdimen\WedABookDim
+\newdimen\WedAChapterDim
+\newdimen\WedAChapterTopicDim
+
+\newcommand{\WedAColWidths}[5]{
+\SelectMainFont
+\UpdateDimMeasure{\WedADateDayDim}{\hbox{#1}}
+\UpdateDimMeasure{\WedADateMonthDim}{\hbox{#2}}
+\UpdateDimMeasure{\WedABookDim}{\hbox{#3}}
+\UpdateDimMeasure{\WedAChapterDim}{\hbox{#4}}
+\UpdateDimMeasure{\WedAChapterTopicDim}{\hbox{#5}}
+}
+\newdimen\WedBDateDayDim
+\newdimen\WedBDateMonthDim
+\newdimen\WedBBookDim
+\newdimen\WedBChapterDim
+\newdimen\WedBChapterTopicDim
+
+\newcommand{\WedBColWidths}[5]{
+\SelectMainFont
+\UpdateDimMeasure{\WedBDateDayDim}{\hbox{#1}}
+\UpdateDimMeasure{\WedBDateMonthDim}{\hbox{#2}}
+\UpdateDimMeasure{\WedBBookDim}{\hbox{#3}}
+\UpdateDimMeasure{\WedBChapterDim}{\hbox{#4}}
+\UpdateDimMeasure{\WedBChapterTopicDim}{\hbox{#5}}
+}
+
+\newdimen\WedTopicDim
+\newdimen\WedATopicDim
+\newdimen\WedBTopicDim
+\newdimen\WedChapterTopicDim
+
+\newcommand{\calcWedATopicDim}[0]{
+\WedChapterTopicDim = \WedAChapterTopicDim
+\WedTopicDim =\WedAChapterTopicDim
+\advance \WedTopicDim by \WedABookChapterDim
+%\advance \WedTopicDim by 1\padWidth
+\WedATopicDim =\WedTopicDim
+}
+\newcommand{\calcWedBTopicDim}[0]{
+\WedChapterTopicDim = \WedBChapterTopicDim
+\WedTopicDim =\WedBChapterTopicDim
+\advance \WedTopicDim by \WedBBookChapterDim
+%\advance \WedTopicDim by 2\padWidth
+\WedBTopicDim =\WedTopicDim
+}
+
+\newbox\boxToLimit
+\newbox\widthLimit
+\newbox\heightLimit
+\newbox\resultbox
+\def\smash#1{{\setbox0=\hbox{#1}\dp0=0pt\ht0=0pt\wd0=0pt\box0\relax}}
+
+\newcommand{\frameWidth}[0]{0pt}
+\newcommand{\framedBox}[1]{\hbox{#1}}
+
+\newcommand{\debug}[0]{%
+%\renewcommand{\frameWidth}{1pt}
+\renewcommand{\framedBox}[1]{\fbox{##1}}%
+}
+
+\newcommand{\alignRight}[2]{%
+{\setbox\MeasureBox=#1\relax%
+\dimen0=#2%
+\advance\dimen0 by -\wd\MeasureBox%
+\hskip \dimen0\box\MeasureBox}%
+}
+
+\newcommand{\limitBoxSizeResultBox}[3]{%
+\setbox\boxToLimit=\hbox{#3}%
+\setbox\widthLimit=\hbox{\resizebox*{#1}{!}{\copy\boxToLimit}}%
+\setbox\heightLimit=\hbox{\resizebox*{!}{#2}{\box\boxToLimit}}%
+\ifdim\wd\heightLimit<\wd\widthLimit%
+\setbox\resultbox=\box\heightLimit%
+\else%
+\setbox\resultbox=\box\widthLimit\fi%
+}
+
+\newcommand{\limitBoxSizeFTop}[3]{%
+\limitBoxSizeResultBox{#1}{#2}{#3}%
+\hbox{\smash{%\lower\dp\resultbox
+\box\resultbox}}%
+\framedBox{\rule{\frameWidth}{#2}%
+\rule{#1}{\frameWidth}}%
+}
+\newcommand{\limitBoxSizeBottomRaised}[3]{%
+\limitBoxSizeResultBox{#1}{#2}{#3}%
+\hbox{\smash{\lower\ht\resultbox\hbox{\raise#2
+\box\resultbox}}}%
+\framedBox{\rule{\frameWidth}{#2}%
+\rule{#1}{\frameWidth}}%
+}
+\newcommand{\limitBoxSizeBottomRaisedRight}[3]{%
+\limitBoxSizeResultBox{#1}{#2}{#3}%
+\hbox{\smash{\lower\ht\resultbox\hbox{\raise#2\hbox{%
+\alignRight{\box\resultbox}{#1}}}}}%
+\framedBox{\rule{\frameWidth}{#2}%
+\rule{#1}{\frameWidth}}%
+}
+
+\newcommand{\limitBoxSizeFBottom}[3]{%
+\limitBoxSizeResultBox{#1}{#2}{#3}%
+\hbox{\smash{\raise\ht\resultbox\box\resultbox}}%
+\framedBox{\rule{\frameWidth}{#2}%
+\rule{#1}{\frameWidth}}%
+}
+
+\newcommand{\limitBoxSizeBottomRight}[3]{%
+\limitBoxSizeResultBox{#1}{#2}{#3}%
+\hbox{\smash{%
+\raise\ht\resultbox\hbox{\alignRight{\box\resultbox}{#1}}%
+}}%
+\framedBox{\rule{\frameWidth}{#2}%
+\rule{#1}{\frameWidth}}%
+}
+
+\newcommand{\limitBoxSizeTop}[3]{%
+\limitBoxSizeFTop{#1}{#2}{#3}%
+%\limitBoxSizeResultBox{#1}{#2}{#3}%
+%\hbox{{\raise\dp\resultbox\box\resultbox}}%
+}
+
+\newcommand{\limitBoxSizeBottom}[3]{%
+\limitBoxSizeFBottom{#1}{#2}{#3}%
+%\limitBoxSizeResultBox{#1}{#2}{#3}%
+%\hbox{\lower\ht\resultbox\box\resultbox}
+}
+
+\newcommand{\padWidth}[0]{1mm}
+\newcommand{\pad}[0]{@{\hspace{\padWidth}}}
+\newcommand{\padSkip}[0]{\hskip \padWidth}
+\newcommand{\negpadSkip}[0]{\hskip -1\padWidth}
+\newcommand{\nopad}[0]{@{}}
+\newcommand{\nobreakhyphen}[0]{\nobreak\hbox{-}\nobreak}
+\newcommand{\nobreakendash}[0]{\nobreak\hbox{--}\nobreak}
+\newcommand{\nobreakrefrange}[0]{\nobreakhyphen}
+%\textendash\nobreak}
+\newcommand{\nf}[1]{\SelectNumberFont#1\SelectMainFont}
+\newcommand{\tf}[1]{\SelectMainFont#1}%\SelectMainFont}
+\newcommand{\bnf}[1]{\SelectBoldNumberFont#1\SelectMainFont\bfseries}
+\newcommand{\btf}[1]{\SelectMainFont\bfseries#1}%\SelectMainFont}
+
+\newcommand{\enDashSep}[0]{%
+\discretionary{}{}{\hbox{\hspace{.6ex}\textendash\hspace{.6ex}}}}
+
+\newcommand{\backslashsep}[0]{%
+\discretionary{}{}{\hbox{\hspace{.6ex}\textbackslash\hspace{.6ex}}}}
+
+\newcommand{\tstrut}[0]{\rule{0mm}{1.9ex}}
+\newcommand{\bstrut}[0]{\rule[-0.4ex]{0mm}{1ex}}
+
+\newdimen\WedABookChapterDim
+\newdimen\WedBBookChapterDim
+\newbox\MeasureBox
+\WedABookChapterDim = 5mm
+\WedBBookChapterDim = 5mm
+
+\newcount\MtMode
+\newcommand{\measureModeA}{\MtMode=1}
+\newcommand{\measureModeB}{\MtMode=2}
+\newcommand{\typesetModeA}{\MtMode=3}
+\newcommand{\typesetModeB}{\MtMode=4}
+
+\newcommand{\UpdateDimMeasure}[2]{ % dim, hbox
+\setbox\MeasureBox=#2%
+\ifdim\wd\MeasureBox >#1%
+#1=\wd\MeasureBox%
+\fi}
+
+
+\newcommand{\WedChapterTypeset}[6]{
+\raggedleft\tstrut#1&\raggedright\mf#2&\mf#3\hfill#4\bstrut&%
+\begin{minipage}[t]{\WedChapterTopicDim}\raggedright\mf#5%
+\setbox\MeasureBox=\hbox{#6}%
+\ifdim\wd\MeasureBox>0pt\backslashsep%
+\mf#6\fi\bstrut\end{minipage}%
+\\ \hline
+}
+
+\newcommand{\WedChapterMeasureA}[6]{%
+\SelectMainFont%
+\UpdateDimMeasure{\WedADateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\WedADateMonthDim}{\hbox{\mf#2}}
+\UpdateDimMeasure{\WedABookChapterDim}{\hbox{\mf#3\hspace{0.6ex}#4}}
+}
+
+\newcommand{\WedChapterMeasureB}[6]{
+\UpdateDimMeasure{\WedBDateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\WedBDateMonthDim}{\hbox{\mf#2}}
+\UpdateDimMeasure{\WedBBookChapterDim}{\hbox{\mf#3\hspace{0.6ex}#4}}
+}
+
+\newcommand{\mtModeNameTypesetMeasureAB}[0]{%
+\ifcase\MtMode\or MeasureA\or MeasureB\or Typeset\or Typeset\fi}
+
+\newcommand{\mtModeNameTypesetMeasure}[0]{%
+\ifcase\MtMode\or Measure\or Measure\or Typeset\or Typeset\fi}
+
+\newcommand{\WedChapter}[6]{%
+\csname WedChapter\mtModeNameTypesetMeasureAB\endcsname{#1}{#2}{#3}{#4}{#5}{#6}}
+
+\newcommand{\WedTopicMeasureA}[5]{
+\UpdateDimMeasure{\WedADateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\WedADateMonthDim}{\hbox{\mf#2}}
+}
+\newcommand{\WedTopicMeasureB}[5]{
+\UpdateDimMeasure{\WedBDateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\WedBDateMonthDim}{\hbox{\mf#2}}
+}
+
+\newcommand{\WedTopicTypeset}[5]{
+\raggedleft\tstrut#1&\raggedright\mf#2&\multicolumn{2}{%
+\nopad p{\WedTopicDim} \nopad|}{\raggedright\mf\textbf{#3%
+\setbox\MeasureBox=\hbox{#4}%
+\ifdim\wd\MeasureBox>0pt\enDashSep%
+#4\else\fi} \penalty-20#5\bstrut} \\ \hline
+}
+
+
+\newcommand{\WedTopic}[5]{%
+\csname WedTopic\mtModeNameTypesetMeasureAB\endcsname{#1}{#2}{#3}{#4}{#5}}
+
+\newcommand{\WedListHTypeset}[1]{%
+\multicolumn{4}{|c|}{\mf\LARGE\textbf{#1\tstrut}} \\ \hline}
+
+\newcommand{\WedListHMeasure}[1]{}
+
+\newcommand{\WedListH}[1]{%
+\csname WedListH\mtModeNameTypesetMeasure\endcsname{#1}}
+
+\newcommand{\WedSubListHTypeset}[1]{%
+\multicolumn{4}{|c|}{\mf\large\textbf{#1\tstrut}}\\ \hline}
+
+\newcommand{\WedSubListHMeasure}[1]{}
+
+\newcommand{\WedListSubH}[1]{%
+\csname WedSubListH\mtModeNameTypesetMeasure\endcsname{#1}}
+
+\newcommand{\StartWedATypeset}[0]{%
+\PrintWaterMark%
+\PackageWarning{WedA}{StartTypeset}%
+\typesetModeA%
+\calcWedATopicDim%
+\begin{tabular}
+{|\pad p{\WedADateDayDim} \pad p{\WedADateMonthDim} \pad | \pad p{\WedABookChapterDim} \pad | \pad p{\WedAChapterTopicDim} \pad| }\hline%
+}
+
+\newcommand{\StartWedBTypeset}[0]{%
+\PrintWaterMark%
+\PackageWarning{WedB}{StartTypeset}%
+\typesetModeB%
+\calcWedBTopicDim%
+\begin{tabular}
+{|\pad p{\WedBDateDayDim} \pad p{\WedBDateMonthDim} \pad | \pad p{\WedBBookChapterDim} \pad | \pad p{\WedBChapterTopicDim} \pad| }\hline%
+}
+
+\newcommand{\EndWed}[0]{\end{tabular}}
+
+\newcommand{\StartSunA}{%
+\PrintWaterMark%
+\typesetModeA%
+\setSunATopicCalcChapterDim%
+\begin{tabular}
+{|\pad p{\SunADateDayDim} \pad p{\SunADateMonthDim} \pad |  \pad p{\SunABookDim}%
+\pad p{\SunAChapterDim} \pad| }\hline}
+
+\newcommand{\StartSunB}{%
+\PrintWaterMark%
+\typesetModeB%
+\setSunBTopicCalcChapterDim%
+\begin{tabular}
+{|\pad p{\SunBDateDayDim} \pad p{\SunBDateMonthDim} \pad |  \pad p{\SunBBookDim}%
+\pad p{\SunBChapterDim} \pad| }\hline}
+
+\newcommand{\EndSun}[0]{\end{tabular}}
+
+\newcommand{\SunListHTypeset}[1]{%
+\multicolumn{4}{|c|}{\mf\LARGE\textbf{#1}\tstrut} \\ \hline}
+
+\newcommand{\SunListHMeasure}[1]{}
+
+\newcommand{\SunListH}[1]{%
+\csname SunListH\mtModeNameTypesetMeasure\endcsname{#1}}
+
+\newcommand{\SunListSubHTypeset}[1]{%
+\multicolumn{4}{|c|}{\mf\large\textbf{#1\tstrut}}\\ \hline}
+
+\newcommand{\SunListSubHMeasure}[1]{}
+
+\newcommand{\SunListSubH}[1]{%
+\csname SunListSubH\mtModeNameTypesetMeasure\endcsname{#1}}
+
+\newcommand{\SunTopicTypeset}[5]{%
+\mf\tstrut\raggedleft#1&\mf\raggedright#2&\multicolumn{2}{% 
+\nopad p{\SunTopicDim}  |}{\raggedright\mf\textbf{#3\setbox\MeasureBox=\hbox{#4}%
+\ifdim\wd\MeasureBox>0pt\enDashSep#4\fi} \penalty-20#5\bstrut} \\ \hline}
+
+\newcommand{\SunTopicMeasureA}[5]{%
+\UpdateDimMeasure{\SunADateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\SunADateMonthDim}{\hbox{\mf#2}}
+}
+\newcommand{\SunTopicMeasureB}[5]{%
+\UpdateDimMeasure{\SunBDateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\SunBDateMonthDim}{\hbox{\mf#2}}
+}
+
+\newcommand{\SunTopic}[5]{%
+\csname SunTopic\mtModeNameTypesetMeasureAB\endcsname{#1}{#2}{#3}{#4}{#5}
+}
+
+\newcommand{\SunChapterTypeset}[4]{%
+\mf\raggedleft\tstrut#1&\raggedright\mf#2&\mf#3&\hfill#4\hfill\bstrut%
+\\ \hline}
+
+\newcommand{\SunChapterMeasureA}[4]{%
+\UpdateDimMeasure{\SunADateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\SunADateMonthDim}{\hbox{\mf#2}}
+\UpdateDimMeasure{\SunABookDim}{\hbox{\mf#3}}
+}
+\newcommand{\SunChapterMeasureB}[4]{%
+\UpdateDimMeasure{\SunBDateDayDim}{\hbox{\mf#1}}
+\UpdateDimMeasure{\SunBDateMonthDim}{\hbox{\mf#2}}
+\UpdateDimMeasure{\SunBBookDim}{\hbox{\mf#3}}
+}
+\newcommand{\SunChapter}[4]{%
+\csname SunChapter\mtModeNameTypesetMeasureAB\endcsname{#1}{#2}{#3}{#4}
+}
+
+\newcommand{\WorkingPageHeight}[0]{285mm} %132*2=264+16=280+16=296
+
+%\newcommand{\BoxHeight}[0]{136mm} %136*2=272+8=280+16=296
+%\newcommand{\SunWidth}[0]{72mm}
+%\newcommand{\WedWidth}[0]{114mm} %114+72=186+8=194+16=210
+
+\newbox\SideABox
+\newbox\SideBBox
+
+\newcommand{\SunABox}[0]{%
+\limitBoxSizeBottomRaised{\SunWidth}{\BoxHeight}{%
+\lower .9mm\hbox{\StartSunA\SunA\EndSun}}}
+
+\newcommand{\WedANoteBox}[0]{%
+\setbox\boxToLimit=\hbox{\parbox[t]{\WedATopicDim}{\raggedright\EndNoteWedA}}%
+\ifdim\wd\boxToLimit>0pt%
+\hbox{\resizebox*{\WedATopicDim}{!}{\box\boxToLimit}}%
+\else\fi
+}
+\newcommand{\WedBNoteBox}[0]{%
+\setbox\boxToLimit=\hbox{\parbox[t]{\WedBTopicDim}{\raggedright\EndNoteWedB}}%
+\ifdim\wd\boxToLimit>0pt%
+\hbox{\resizebox*{\WedBTopicDim}{!}{\box\boxToLimit}}%
+\else\fi
+}
+
+\newcommand{\WedABox}[0]{%
+\calcWedATopicDim%
+\limitBoxSizeBottomRaisedRight{\WedWidth}{\BoxHeight}{%
+%\lower .9mm\hbox{\StartWedATypeset\WedA\EndWed\EndNoteWedA}}%
+\lower .9mm\hbox{\vbox{\hbox{\StartWedATypeset\WedA\EndWed}%
+\WedANoteBox}}}%
+}
+
+\newcommand{\SunBBox}[0]{%
+\limitBoxSizeBottomRaisedRight{\SunWidth}{\BoxHeight}{%
+\lower .9mm\hbox{\StartSunB\SunB\EndSun}}%
+}
+
+\newcommand{\WedBBox}[0]{%
+\calcWedBTopicDim%
+\limitBoxSizeBottomRaised{\WedWidth}{\BoxHeight}{%
+\lower .9mm\hbox{\vbox{\hbox{\StartWedBTypeset\WedB\EndWed}%
+\WedBNoteBox}}}}
+
+\newcommand{\MakeBoxes}[0]{%
+\measureModeA\WedA\SunA%
+\measureModeB\WedB\SunB%
+\PackageWarning{WedAB}{Measurement done}%
+%\measureModeOff
+\setbox\SideABox =%
+\vtop{%
+\hbox{\limitBoxSizeTop{\oneSideBoxWidth}{\BoxHeight}{%
+\hbox  to \WorkingPageWidth{\SunABox\hfil\WedABox}%
+}}}%
+\setbox\SideBBox =%
+\vtop{%
+\hbox{\limitBoxSizeTop{\oneSideBoxWidth}{\BoxHeight}{%
+\hbox to \WorkingPageWidth{\WedBBox\hfil\SunBBox}%
+}}}
+}
+\newcommand{\OnePagePreview}[0]{%
+\vbox to \WorkingPageHeight{%
+\copy\SideABox%
+\vfil%
+\copy\SideBBox}}
+
+\newcommand{\OnePageTwisted}[0]{%
+\vbox to \WorkingPageHeight{%
+\copy\SideABox%
+\vfil%
+{\rotatebox[origin=c]{180}%
+{\copy\SideBBox}}}}
+
+\newcommand{\TwoPageTwisted}[0]{%
+\vbox to \WorkingPageHeight{%
+\copy\SideABox%
+\vfil%
+\rotatebox[origin=c]{180}{\copy\SideABox}}%
+\newpage%
+\vbox to \WorkingPageHeight{%
+\copy\SideBBox%
+\vfil%
+\rotatebox[origin=c]{180}{\copy\SideBBox}%
+}%
+}
+
+\newcommand{\TwoPageLarge}[0]{%
+%\resizebox{\oneSideBoxWidth}{!}{%
+\rotatebox[origin=c]{0}{\copy\SideABox}%
+%}%
+\newpage%
+%\resizebox{\oneSideBoxWidth}{!}{%
+\rotatebox[origin=c]{0}{\copy\SideBBox}%
+%}%
+}
+
+
+\newcommand{\Init}[0]{%
+\errorcontextlines=7
+\setlength{\parskip}{0cm}
+\setlength\fboxsep{0pt}
+\setlength\fboxrule{0.1pt}
+\setlength\parindent{0cm}
+\SelectMainFont%
+\exhyphenpenalty = -20%
+\doublehyphendemerits = 0
+\finalhyphendemerits = 0
+\adjdemerits = 0
+\linepenalty=30
+\setlength{\arrayrulewidth}{.5pt}
+}
+
+\newcommand{\StartOutput}[0]{%
+\begin{document}%
+\Init%
+\pagestyle{empty}%
+\MakeBoxes%
+%{\OnePagePreview}
+%{\OnePageTwisted}
+%{\TwoPageTwisted}
+}
+
+\newcommand{\EndOutput}[0]{%
+\end{document}}
