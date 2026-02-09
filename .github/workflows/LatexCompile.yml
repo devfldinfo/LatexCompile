@@ -80,6 +80,7 @@ jobs:
 
             echo "Compiling $texfile"
             latexmk \
+              -cd \
               -xelatex \
               -interaction=nonstopmode \
               -halt-on-error \
