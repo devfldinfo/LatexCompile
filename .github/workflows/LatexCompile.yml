@@ -55,6 +55,13 @@ jobs:
             exit 78
           fi
 
+      - name: Cache TeX Live
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/share/texlive
+          key: texlive-${{ runner.os }}-v1
+
       - name: Install LaTeX
         run: |
           sudo apt-get update
