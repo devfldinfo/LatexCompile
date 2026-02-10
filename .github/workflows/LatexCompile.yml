@@ -36,7 +36,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Abort unless a .tex file was added
+      # -------------------------------------------------
+      # Abort early if no .tex files were changed
+      # -------------------------------------------------
+      - name: Abort unless a .tex file was added or modified
         shell: bash
         run: |
           set -e
@@ -45,23 +48,49 @@ jobs:
             exit 0
           fi
 
-          git diff --name-status ${{ github.event.before }} ${{ github.sha }} > changes.txt
+          git diff --name-status HEAD~1 HEAD > changes.txt || true
 
           echo "Changed files:"
           cat changes.txt
 
-          if ! grep -Ei '^A\s+.*\.tex$' changes.txt; then
-            echo "No .tex file added. Exiting."
+          if ! grep -Ei '\.tex$' changes.txt; then
+            echo "No .tex changes detected. Exiting."
             exit 78
           fi
 
+      # -------------------------------------------------
+      # Cache TeX Live
+      # -------------------------------------------------
+      - name: Cache TeX Live
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/share/texlive
+            /var/lib/texmf
+            ~/.texlive
+          key: texlive-${{ runner.os }}-v1
+          restore-keys: |
+            texlive-${{ runner.os }}-
+
+      # -------------------------------------------------
+      # Install LaTeX toolchain (XeLaTeX)
+      # -------------------------------------------------
       - name: Install LaTeX
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            texlive-latex-base\
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-xetex \
             latexmk
 
+          # Sanity check
+          which xelatex
+          xelatex --version
+
+      # -------------------------------------------------
+      # Compile root LaTeX documents only
+      # -------------------------------------------------
       - name: Compile LaTeX root documents only
         shell: bash
         run: |
@@ -82,6 +111,9 @@ jobs:
               "$texfile"
           done < <(find . -type f -iname "*.tex" -print0)
 
+      # -------------------------------------------------
+      # Cleanup auxiliary files
+      # -------------------------------------------------
       - name: Delete temporary LaTeX files
         run: |
           find . -type f \( \
@@ -100,20 +132,19 @@ jobs:
             -name "*.run.xml" \
           \) -delete
 
-      - name: Auto Commit PDFs
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Auto-compile LaTeX PDFs"
-          file_pattern: '**/*.pdf'
-
+      # -------------------------------------------------
+      # Mark completion + commit PDFs
+      # -------------------------------------------------
       - name: Mark workflow completed
-        if: always()
         shell: bash
         run: |
           mkdir -p input
           echo "Workflow completed at $(date -u)" > input/completed.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add input/completed.txt
-          git commit -m "Mark workflow completed" || echo "Nothing to commit"
-          git push
+
+      - name: Auto Commit PDFs
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Auto-compile LaTeX PDFs"
+          file_pattern: |
+            **/*.pdf
+            input/completed.txt
