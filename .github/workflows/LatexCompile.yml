@@ -59,7 +59,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            texlive-latex-base 
+            texlive-latex-base\
+            latexmk
 
       - name: Compile LaTeX root documents only
         shell: bash
