@@ -4,23 +4,9 @@ on:
   push:
     paths:
       - '**/*.tex'
-      - '**/*.Tex'
-      - '**/*.tEx'
-      - '**/*.teX'
-      - '**/*.TEx'
-      - '**/*.tEX'
-      - '**/*.TeX'
-      - '**/*.TEX'
   pull_request:
     paths:
       - '**/*.tex'
-      - '**/*.Tex'
-      - '**/*.tEx'
-      - '**/*.teX'
-      - '**/*.TEx'
-      - '**/*.tEX'
-      - '**/*.TeX'
-      - '**/*.TEX'
   workflow_dispatch:
 
 permissions:
@@ -55,62 +41,13 @@ jobs:
             exit 78
           fi
 
-      - name: Cache TeX Live
-        uses: actions/cache@v4
+      - name: Compile LaTeX root documents
+        uses: xu-cheng/latex-action@v3
         with:
-          path: |
-            /usr/share/texlive
-          key: texlive-${{ runner.os }}-v1
-
-      - name: Install LaTeX
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            texlive-latex-base \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
-            texlive-xetex \
-            texlive-bibtex-extra \
-            biber \
-            latexmk
-
-      - name: Compile LaTeX root documents only
-        shell: bash
-        run: |
-          set -e
-
-          while IFS= read -r -d '' texfile; do
-            if ! grep -qi '\\documentclass' "$texfile"; then
-              echo "Skipping non-root file: $texfile"
-              continue
-            fi
-
-            echo "Compiling $texfile"
-            latexmk \
-              -cd \
-              -xelatex \
-              -interaction=nonstopmode \
-              -halt-on-error \
-              "$texfile"
-          done < <(find . -type f -iname "*.tex" -print0)
-
-      - name: Delete temporary LaTeX files
-        run: |
-          find . -type f \( \
-            -name "*.aux" -o \
-            -name "*.log" -o \
-            -name "*.lof" -o \
-            -name "*.lot" -o \
-            -name "*.toc" -o \
-            -name "*.bbl" -o \
-            -name "*.blg" -o \
-            -name "*.out" -o \
-            -name "*.synctex.gz" -o \
-            -name "*.fdb_latexmk" -o \
-            -name "*.fls" -o \
-            -name "*.bcf" -o \
-            -name "*.run.xml" \
-          \) -delete
+          latexmk_use_xelatex: true
+          latexmk_shell_escape: true
+          root_file: |
+            $(find . -type f -iname "*.tex" -exec grep -l '\\documentclass' {} \;)
 
       - name: Auto Commit PDFs
         uses: stefanzweifel/git-auto-commit-action@v4
