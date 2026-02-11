@@ -133,8 +133,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p input
-          echo "Workflow completed at $(date -u)" > input/completed.txt
-
+          echo "Completed at $(date -u +%Y-%m-%dT%H:%M:%SZ) commit=${GITHUB_SHA}" > input/completed.txt
+          
       # -------------------------------------------------
       # Commit PDFs + completion marker
       # -------------------------------------------------
