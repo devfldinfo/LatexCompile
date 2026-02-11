@@ -61,16 +61,16 @@ jobs:
       # -------------------------------------------------
       # Cache TeX Live
       # -------------------------------------------------
-      - name: Cache TeX Live
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/share/texlive
-            /var/lib/texmf
-            ~/.texlive
-          key: texlive-${{ runner.os }}-v1
-          restore-keys: |
-            texlive-${{ runner.os }}-
+#      - name: Cache TeX Live
+#        uses: actions/cache@v4
+#        with:
+#          path: |
+#            /usr/share/texlive
+#            /var/lib/texmf
+#            ~/.texlive
+#          key: texlive-${{ runner.os }}-v1
+#          restore-keys: |
+#            texlive-${{ runner.os }}-
 
       # -------------------------------------------------
       # Install LaTeX
