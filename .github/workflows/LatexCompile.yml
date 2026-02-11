@@ -31,15 +31,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # -------------------------------------------------
+      # Checkout
+      # -------------------------------------------------
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       # -------------------------------------------------
-      # Abort early if no .tex files were changed
+      # Abort unless a .tex file was ADDED
       # -------------------------------------------------
-      - name: Abort unless a .tex file was added or modified
+      - name: Abort unless a .tex file was added
         shell: bash
         run: |
           set -e
@@ -48,13 +51,10 @@ jobs:
             exit 0
           fi
 
-          git diff --name-status HEAD~1 HEAD > changes.txt || true
+          git diff --name-status ${{ github.event.before }} ${{ github.sha }} > changes.txt || true
 
-          echo "Changed files:"
-          cat changes.txt
-
-          if ! grep -Ei '\.tex$' changes.txt; then
-            echo "No .tex changes detected. Exiting."
+          if ! grep -E '^A\s+.*\.(tex|Tex|tEx|teX|TEx|tEX|TeX|TEX)$' changes.txt; then
+            echo "No newly added .tex files detected. Exiting."
             exit 78
           fi
 
@@ -73,7 +73,7 @@ jobs:
             texlive-${{ runner.os }}-
 
       # -------------------------------------------------
-      # Install LaTeX toolchain (XeLaTeX)
+      # Install LaTeX
       # -------------------------------------------------
       - name: Install LaTeX
         run: |
@@ -84,25 +84,18 @@ jobs:
             texlive-xetex \
             latexmk
 
-          # Sanity check
-          which xelatex
-          xelatex --version
-
       # -------------------------------------------------
-      # Compile root LaTeX documents only
+      # Compile root documents
       # -------------------------------------------------
       - name: Compile LaTeX root documents only
         shell: bash
         run: |
           set -e
-
           while IFS= read -r -d '' texfile; do
             if ! grep -qi '\\documentclass' "$texfile"; then
-              echo "Skipping non-root file: $texfile"
               continue
             fi
 
-            echo "Compiling $texfile"
             latexmk \
               -cd \
               -xelatex \
@@ -112,7 +105,7 @@ jobs:
           done < <(find . -type f -iname "*.tex" -print0)
 
       # -------------------------------------------------
-      # Cleanup auxiliary files
+      # Cleanup aux files
       # -------------------------------------------------
       - name: Delete temporary LaTeX files
         run: |
@@ -133,14 +126,18 @@ jobs:
           \) -delete
 
       # -------------------------------------------------
-      # Mark completion + commit PDFs
+      # ALWAYS write completion file (final step)
       # -------------------------------------------------
-      - name: Mark workflow completed
+      - name: Write completion marker
+        if: always()
         shell: bash
         run: |
           mkdir -p input
           echo "Workflow completed at $(date -u)" > input/completed.txt
 
+      # -------------------------------------------------
+      # Commit PDFs + completion marker
+      # -------------------------------------------------
       - name: Auto Commit PDFs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
