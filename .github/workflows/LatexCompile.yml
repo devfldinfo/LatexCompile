@@ -51,6 +51,8 @@ jobs:
             exit 0
           fi
 
+          git config --global core.quotepath false
+          
           git diff --name-status ${{ github.event.before }} ${{ github.sha }} > changes.txt || true
 
           if ! grep -E '^A\s+.*\.(tex|Tex|tEx|teX|TEx|tEX|TeX|TEX)$' changes.txt; then
