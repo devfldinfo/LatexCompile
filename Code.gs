@@ -1,10 +1,14 @@
+//Version 1.1
+
 /**
  * ============================
  * Configuration
  * ============================
  */
-const DRIVE_OUTPUT_FOLDER_ID = '1fS0rwF5ceTEpk5nMkg4J9HW1cDqxmBNd';
-const DRIVE_INPUT_FOLDER_ID = '1y8qwfeOtjauaFiKNL-l3VoYUTKca6Q-a';
+//var aLatexFolder = '1y8qwfeOtjauaFiKNL-l3VoYUTKca6Q-a';
+//var aOutputFolder = '1WgOSvBuxg5hekeawPpivVcsWhNhEnx5Z';
+//var aBackupFolder = '1vgUDHX4OTfY4ujNiZS14SJ-KyBKlfRXX';
+
 
 const CONFIG = (() => {
   const props = PropertiesService.getScriptProperties();
@@ -19,61 +23,12 @@ const CONFIG = (() => {
   };
 })();
 
-/**
- * ============================
- * Entry Point
- * ============================
- * Run this on a time trigger (every 1 minute)
- */
-function processUnreadEmails2() {
-  try {
-    resetGithubInputFolder();
+function test()
+{
+  //var a = isWorkflowRunning();
+  //return a;
+  processDriveTexFolder(aLatexFolder,aOutputFolder);
 
-    const threads = GmailApp.search('is:unread in:inbox newer_than:5d');
-    const uploads = [];
-    const jobs = [];
-
-    threads.forEach(thread => {
-      thread.getMessages().forEach(msg => {
-        if (!msg.isUnread()) return;
-
-        const attachments = msg.getAttachments();
-        if (!attachments.length) return;
-
-        const sender = extractEmail(msg.getFrom());
-        const timestamp = Utilities.formatDate(
-          new Date(),
-          Session.getScriptTimeZone(),
-          'ddMMyyyyHHmmss'
-        );
-
-        const folder = `${CONFIG.INPUT_ROOT}/${sender} ${timestamp}`;
-
-        attachments.forEach(a => {
-          uploads.push({
-            path: `${folder}/${a.getName()}`,
-            content: Utilities.newBlob(a.getBytes()).getDataAsString()
-          });
-        });
-
-        jobs.push({ sender, folder, message: msg });
-      });
-    });
-
-    if (!uploads.length) return;
-
-    createSingleCommit(uploads);
-
-    pollUntilCompleted(CONFIG.INPUT_ROOT);
-
-    jobs.forEach(job => {
-      sendPDFs(job);
-      job.message.markRead(); // ✅ marked ONLY after success
-    });
-
-  } catch (err) {
-    throw err;
-  }
 }
 
 function processUnreadEmails() {
@@ -135,7 +90,6 @@ function processUnreadEmails() {
     throw err;
   }
 }
-
 
 /**
  * ============================
@@ -276,20 +230,6 @@ function extractEmail(from) {
   return m ? m[1] : from.trim();
 }
 
-/**
- * ============================
- * Error Logging
- * ============================
- */
-//function onError(e) {
-//  const SHEET_ID = '1Y5AHU332Ff0YzfowsFD2PVaQXu22yL4ll9KCLwkjG9s';
-//  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
-//  sheet.appendRow([
-//    new Date(),
-//    e && e.message ? e.message : JSON.stringify(e)
-//  ]);
-//}
-
 /* ================= RESET INPUT ================= */
 function resetGithubInputFolder() {
   const base = githubApiBase();
@@ -359,7 +299,6 @@ function resetGithubInputFolder() {
   );
 }
 
-
 function githubApiBase() {
   const p = PropertiesService.getScriptProperties();
   return `https://api.github.com/repos/${p.getProperty("GITHUB_OWNER")}/${p.getProperty("GITHUB_REPO")}`;
@@ -379,15 +318,13 @@ function githubFetch(url, token, method, payload) {
   const r = UrlFetchApp.fetch(url, opt);
   if (r.getResponseCode() >= 300)
   {
-   // Logger.log(r.getContentText());
     throw new Error(r.getContentText());
-  
   }
   return r.getContentText();
 }
 
 /************************************** */
-function processDriveTexFolder() {
+function processDriveTexFolder(DRIVE_INPUT_FOLDER_ID, DRIVE_OUTPUT_FOLDER_ID) {
 
   resetGithubInputFolder();
 
@@ -395,30 +332,26 @@ function processDriveTexFolder() {
   const files = folder.getFiles();
 
   const uploads = [];
-  const jobs = [];
+  //const jobs = [];
+  
+    // ✅ create timestamp ONCE
+  const timestamp = Utilities.formatDate(
+    new Date(),
+    Session.getScriptTimeZone(),
+    'ddMMyyyyHHmmss'
+  );
+    const jobFolder = `${CONFIG.INPUT_ROOT}/drive ${timestamp}`;
 
   while (files.hasNext()) {
     const file = files.next();
 
     if (!/\.tex$/i.test(file.getName())) continue;
 
-    const timestamp = Utilities.formatDate(
-      new Date(),
-      Session.getScriptTimeZone(),
-      'ddMMyyyyHHmmss'
-    );
-
-    const jobFolder = `${CONFIG.INPUT_ROOT}/drive ${timestamp}`;
-
     uploads.push({
       path: `${jobFolder}/${file.getName()}`,
       content: file.getBlob().getDataAsString()
     });
 
-    jobs.push({
-      folder: jobFolder,
-      sourceFile: file
-    });
   }
 
   if (!uploads.length) return;
@@ -427,28 +360,52 @@ function processDriveTexFolder() {
 
   pollUntilCompleted(CONFIG.INPUT_ROOT);
 
-  jobs.forEach(job => {
-    savePDFsToDrive(job);
-  });
+  savePDFsToDrive(jobFolder, DRIVE_OUTPUT_FOLDER_ID);
 
 }
 
-function savePDFsToDrive(job) {
+function savePDFsToDrive(jobFolder, DRIVE_OUTPUT_FOLDER_ID) {
 
-  const pdfs = listPDFs(job.folder);
+  const pdfs = listPDFs(jobFolder);
 
   if (!pdfs.length) {
-    throw new Error(`No PDFs found in ${job.folder}`);
+    throw new Error(`No PDFs found in ${jobFolder}`);
   }
 
   const outputFolder = DriveApp.getFolderById(DRIVE_OUTPUT_FOLDER_ID);
 
   pdfs.forEach(name => {
 
-    const blob = downloadFromGitHub(`${job.folder}/${name}`);
+    const blob = downloadFromGitHub(`${jobFolder}/${name}`);
 
     outputFolder.createFile(blob);
 
   });
 
+}
+
+function isWorkflowRunning() {
+  const owner = CONFIG.GITHUB_OWNER;
+  const repo = CONFIG.GITHUB_REPO;
+  const token = CONFIG.GITHUB_TOKEN;   // personal access token
+
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=5`;
+
+  const options = {
+    method: "get",
+    headers: {
+      Authorization: "Bearer " + token,
+      Accept: "application/vnd.github+json"
+    }
+  };
+
+  const response = UrlFetchApp.fetch(url, options);
+  const data = JSON.parse(response.getContentText());
+
+  const running = data.workflow_runs.some(run =>
+    run.status === "in_progress" || run.status === "queued"
+  );
+
+  Logger.log("Workflow running: " + running);
+  return running;
 }
