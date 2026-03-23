@@ -35,6 +35,7 @@ jobs:
 
       - name: Create Alignment folder
         run: mkdir -p Alignment
+             rm -f Alignment/* || true
 
       - name: Run alignment check (recursive)
         run: |
