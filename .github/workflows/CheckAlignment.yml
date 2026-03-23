@@ -2,18 +2,19 @@ name: PDF Alignment Check
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '**.pdf'
-      - '!Alignment/**'
+  workflow_run:
+    workflows: ["LatexCompile"]
+    types:
+      - completed
 
 permissions:
   contents: write
 
 jobs:
   check-alignment:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-
+    
     env:
       DENSITY: 300
       THRESHOLD: 0.01
