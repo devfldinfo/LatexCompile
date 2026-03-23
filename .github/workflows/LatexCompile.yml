@@ -75,6 +75,7 @@ jobs:
 #            texlive-${{ runner.os }}-
       - name: Clear Output folder
         run: |
+          cd /
           mkdir -p Output
           rm -rf Output/*
     
