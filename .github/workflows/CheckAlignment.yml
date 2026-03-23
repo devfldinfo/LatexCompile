@@ -35,7 +35,8 @@ jobs:
           sudo sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml || true
 
       - name: Create Alignment folder
-        run: mkdir -p Alignment
+        run: |
+             mkdir -p Alignment
              rm -f Alignment/* || true
 
       - name: Run alignment check (recursive)
