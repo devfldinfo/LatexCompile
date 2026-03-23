@@ -65,6 +65,15 @@ jobs:
               # === Flip page 2 ===
               convert "$P2" -flop "$P2F"
 
+            OVERLAY="Alignment/${SAFE_NAME}_overlay.png"
+
+              magick "$P1" "$P2F" \
+              -alpha set \
+              -compose blend \
+              -define compose:args=50,50 \
+              -composite \
+              "$OVERLAY"
+              
               # === Compare images ===
               compare -metric RMSE "$P1" "$P2F" "$DIFF" 2> "$RESULT"
 
