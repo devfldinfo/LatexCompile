@@ -75,8 +75,8 @@ jobs:
 #            texlive-${{ runner.os }}-
       - name: Clear Output folder
         run: |
-          mkdir -p $GITHUB_WORKSPACE/Output
-          rm -rf $GITHUB_WORKSPACE/Output/*
+          mkdir -p $GITHUB_WORKSPACE/output
+          rm -rf $GITHUB_WORKSPACE/output/*
     
       # -------------------------------------------------
       # Install LaTeX
@@ -107,7 +107,7 @@ jobs:
               -xelatex \
               -interaction=nonstopmode \
               -halt-on-error \
-              -outdir=Output \
+              -outdir=$GITHUB_WORKSPACE/output \
               "$texfile"
           done < <(find . -type f -iname "*.tex" -print0)
 
