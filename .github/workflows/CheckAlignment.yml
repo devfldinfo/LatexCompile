@@ -36,12 +36,12 @@ jobs:
 
       - name: Create Alignment folder
         run: |
-          mkdir -p Alignment
+          mkdir -p alignment
           echo "Before cleanup:"
-          ls -la Alignment || true
-          rm -f Alignment/* || true
+          ls -la alignment || true
+          rm -f alignment/* || true
           echo "After cleanup:"
-          ls -la Alignment || true
+          ls -la alignment || true
     
       - name: Run alignment check (recursive)
         run: |
@@ -58,10 +58,10 @@ jobs:
             # SAFE_NAME=$(echo "$FILE" | sed 's|[^a-zA-Z0-9]|_|g')
             SAFE_NAME="$BASENAME"
 
-            P1="Alignment/${SAFE_NAME}_p1.png"
-            P2="Alignment/${SAFE_NAME}_p2.png"
-            P2F="Alignment/${SAFE_NAME}_p2_flipped.png"
-            RESULT="Alignment/${SAFE_NAME}_result.txt"
+            P1="alignment/${SAFE_NAME}_p1.png"
+            P2="alignment/${SAFE_NAME}_p2.png"
+            P2F="alignment/${SAFE_NAME}_p2_flipped.png"
+            RESULT="alignment/${SAFE_NAME}_result.txt"
 
             # === Convert pages ===
             convert -density $DENSITY "${FILE}[0]" "$P1"
@@ -72,7 +72,7 @@ jobs:
               # === Flip page 2 ===
               convert "$P2" -flop "$P2F"
 
-              OVERLAY="Alignment/${SAFE_NAME}_overlay.png"
+              OVERLAY="alignment/${SAFE_NAME}_overlay.png"
 
               convert \
               \( "$P1" -fill red -colorize 100% \) \
@@ -100,7 +100,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add -A Alignment
+          git add -A alignment
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
