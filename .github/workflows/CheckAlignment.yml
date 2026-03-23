@@ -1,0 +1,105 @@
+name: PDF Alignment Check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.pdf'
+
+jobs:
+  check-alignment:
+    runs-on: ubuntu-latest
+
+    env:
+      DENSITY: 300
+      THRESHOLD: 0.01
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # required for committing
+
+      - name: Enable PDF support in ImageMagick
+        run: |
+          sudo sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml || true
+
+      - name: Create Alignment folder
+        run: mkdir -p Alignment
+
+      - name: Run alignment check (recursive)
+        run: |
+          echo "========================================"
+          echo "  Checking all PDF files (recursive)"
+          echo "========================================"
+          echo
+
+          find . -type f -iname "*.pdf" | while read FILE; do
+            echo "Processing: $FILE"
+
+            BASENAME=$(basename "$FILE" .pdf)
+            SAFE_NAME=$(echo "$FILE" | sed 's|[./]|_|g')
+
+            P1="Alignment/${SAFE_NAME}_p1.png"
+            P2="Alignment/${SAFE_NAME}_p2.png"
+            P2F="Alignment/${SAFE_NAME}_p2_flipped.png"
+            DIFF="Alignment/${SAFE_NAME}_diff.png"
+            RESULT="Alignment/${SAFE_NAME}_result.txt"
+
+            # === Convert pages ===
+            magick -density $DENSITY "$FILE[0]" "$P1"
+            magick -density $DENSITY "$FILE[1]" "$P2"
+
+            if [[ -f "$P1" && -f "$P2" ]]; then
+
+              # === Flip page 2 ===
+              magick "$P2" -flop "$P2F"
+
+              # === Compare images ===
+              magick compare -metric RMSE "$P1" "$P2F" "$DIFF" 2> "$RESULT"
+
+              sleep 1
+
+              VALUE=$(awk -F'[()]' '{print $2}' "$RESULT")
+
+              echo "  Alignment score: $VALUE"
+
+              if [[ -n "$VALUE" ]]; then
+                awk -v val="$VALUE" -v threshold="$THRESHOLD" '
+                  BEGIN {
+                    if (val+0 < threshold)
+                      print "  PERFECT alignment";
+                    else
+                      print "  MISALIGNMENT detected";
+                  }'
+              else
+                echo "  ERROR: Could not read comparison result"
+              fi
+
+            else
+              echo "  ERROR: Could not process pages 1 and 2"
+            fi
+
+            # === CLEANUP (keep only diff images) ===
+            rm -f "$P1" "$P2" "$P2F" "$RESULT"
+
+            echo
+          done
+
+          echo "========================================"
+          echo "Done"
+          echo "========================================"
+
+      - name: Commit results to repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add Alignment/*.png || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update alignment diff images"
+            git push
+          fi
