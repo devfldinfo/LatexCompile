@@ -73,7 +73,11 @@ jobs:
 #          key: texlive-${{ runner.os }}-v1
 #          restore-keys: |
 #            texlive-${{ runner.os }}-
-
+      - name: Clear Output folder
+        run: |
+          mkdir -p Output
+          rm -rf Output/*
+    
       # -------------------------------------------------
       # Install LaTeX
       # -------------------------------------------------
@@ -103,6 +107,7 @@ jobs:
               -xelatex \
               -interaction=nonstopmode \
               -halt-on-error \
+              -outdir=Output \
               "$texfile"
           done < <(find . -type f -iname "*.tex" -print0)
 
