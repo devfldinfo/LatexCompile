@@ -74,12 +74,12 @@ jobs:
 
               OVERLAY="alignment/${SAFE_NAME}_overlay.png"
 
-            #  convert \
-            #  \( "$P1" -fill red -colorize 100% \) \
-            #  \( "$P2F" -fill cyan -colorize 100% \) \
-            #  -compose screen \
-            #  -composite \
-            #  "$OVERLAY"
+              convert \
+              \( "$P1" -fill red -colorize 100% \) \
+              \( "$P2F" -fill cyan -colorize 100% \) \
+              -compose screen \
+              -composite \
+              "$OVERLAY"
 
             else
               echo "  ERROR: Could not process pages 1 and 2"
