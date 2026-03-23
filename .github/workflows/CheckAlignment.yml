@@ -36,9 +36,13 @@ jobs:
 
       - name: Create Alignment folder
         run: |
-             mkdir -p Alignment
-             rm -f Alignment/* || true
-
+          mkdir -p Alignment
+          echo "Before cleanup:"
+          ls -la Alignment || true
+          rm -f Alignment/* || true
+          echo "After cleanup:"
+          ls -la Alignment || true
+    
       - name: Run alignment check (recursive)
         run: |
           echo "========================================"
@@ -57,7 +61,6 @@ jobs:
             P1="Alignment/${SAFE_NAME}_p1.png"
             P2="Alignment/${SAFE_NAME}_p2.png"
             P2F="Alignment/${SAFE_NAME}_p2_flipped.png"
-            DIFF="Alignment/${SAFE_NAME}_diff.png"
             RESULT="Alignment/${SAFE_NAME}_result.txt"
 
             # === Convert pages ===
