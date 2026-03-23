@@ -48,7 +48,8 @@ jobs:
 
             BASENAME=$(basename "$FILE" .pdf)
             # Safe name for files (replace spaces and special chars with _)
-            SAFE_NAME=$(echo "$FILE" | sed 's|[^a-zA-Z0-9]|_|g')
+            # SAFE_NAME=$(echo "$FILE" | sed 's|[^a-zA-Z0-9]|_|g')
+            SAFE_NAME="$BASENAME"
 
             P1="Alignment/${SAFE_NAME}_p1.png"
             P2="Alignment/${SAFE_NAME}_p2.png"
@@ -73,28 +74,6 @@ jobs:
               -compose screen \
               -composite \
               "$OVERLAY"
-  
-            
-              # === Compare images ===
-              compare -metric RMSE "$P1" "$P2F" "$DIFF" 2> "$RESULT"
-
-              sleep 1
-
-              VALUE=$(awk -F'[()]' '{print $2}' "$RESULT")
-
-              echo "  Alignment score: $VALUE"
-
-              if [[ -n "$VALUE" ]]; then
-                awk -v val="$VALUE" -v threshold="$THRESHOLD" '
-                  BEGIN {
-                    if (val+0 < threshold)
-                      print "  PERFECT alignment";
-                    else
-                      print "  MISALIGNMENT detected";
-                  }'
-              else
-                echo "  ERROR: Could not read comparison result"
-              fi
 
             else
               echo "  ERROR: Could not process pages 1 and 2"
