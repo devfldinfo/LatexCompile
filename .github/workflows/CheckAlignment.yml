@@ -6,6 +6,9 @@ on:
     paths:
       - '**.pdf'
 
+permissions:
+  contents: write
+  
 jobs:
   check-alignment:
     runs-on: ubuntu-latest
