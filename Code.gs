@@ -1,4 +1,4 @@
-//Version 1.1
+//Version 1.2
 
 /**
  * ============================
@@ -18,6 +18,7 @@ const CONFIG = (() => {
     GITHUB_REPO: props.getProperty('GITHUB_REPO'),
     GITHUB_BRANCH: 'main',
     INPUT_ROOT: 'input',
+    OUTPUT_ROOT: 'output',
     POLL_INTERVAL_MS: 10000,
     MAX_POLLS: 30 // ~5 minutes
   };
@@ -119,14 +120,14 @@ function completedExists(folder) {
  * ============================
  */
 function sendPDFs(job) {
-  const pdfs = listPDFs(job.folder);
+  const pdfs = listFiles(job.folder,"pdf");
 
   if (!pdfs.length) {
     throw new Error(`No PDFs found in ${job.folder}`);
   }
 
   const attachments = pdfs.map(name =>
-    downloadFromGitHub(`${job.folder}/${name}`)
+    downloadFromGitHub(`${job.folder}/${name}`, 'application/pdf')
   );
 
   GmailApp.sendEmail(
@@ -182,17 +183,17 @@ function updateBranch(commitSha) {
   });
 }
 
-function listPDFs(folder) {
+function listFiles(folder,extension) {
   return githubRequest('get', `/contents/${folder}`)
-    .filter(f => f.name.endsWith('.pdf'))
+    .filter(f => f.name.endsWith(`.${extension}`))
     .map(f => f.name);
 }
 
-function downloadFromGitHub(path) {
+function downloadFromGitHub(path, atype) {
   const res = githubRequest('get', `/contents/${path}`);
   return Utilities.newBlob(
     Utilities.base64Decode(res.content),
-    'application/pdf',
+    atype,
     res.name
   );
 }
@@ -360,13 +361,53 @@ function processDriveTexFolder(DRIVE_INPUT_FOLDER_ID, DRIVE_OUTPUT_FOLDER_ID) {
 
   pollUntilCompleted(CONFIG.INPUT_ROOT);
 
-  savePDFsToDrive(jobFolder, DRIVE_OUTPUT_FOLDER_ID);
+  getFilesFromGithub(CONFIG.OUTPUT_ROOT, DRIVE_OUTPUT_FOLDER_ID, "pdf");
+}
+
+function getFilesFromGithub(aGithubFolder, aDriveFolder, aType)
+{
+  const zipBlob = downloadGithubRepoAsZip();
+  extractFilesFromGithubZip(zipBlob,aGithubFolder,aDriveFolder,aType);
+}
+
+function extractFilesFromGithubZip(azipBlob,aRepoFolder,aDriveFolder,aType)
+{
+  let unzippedFiles;
+  try {
+    unzippedFiles = Utilities.unzip(azipBlob);
+  } catch (e) {
+    Logger.log("Unzip failed: " + e.toString());
+    return;
+  }
+
+  const driveFolder = DriveApp.getFolderById(aDriveFolder);
+
+  let count = 0;
+
+  unzippedFiles.forEach(file => {
+    const name = file.getName();
+
+    if (
+      name.toLowerCase().endsWith(`.${aType}`) &&
+      name.includes(`/${aRepoFolder}/`)
+    ) {
+      const cleanName = name.split("/").pop();
+
+      if (!driveFolder.getFilesByName(cleanName).hasNext()) {
+        driveFolder.createFile(file.setName(cleanName));
+        count++;
+      }
+    }
+  });
+
+  Logger.log(`Extracted ${count} ${aType}s`);
 
 }
 
-function savePDFsToDrive(jobFolder, DRIVE_OUTPUT_FOLDER_ID) {
+/*
+function saveFilesToDrive(jobFolder, DRIVE_OUTPUT_FOLDER_ID, extension, atype) {
 
-  const pdfs = listPDFs(jobFolder);
+  const pdfs = listFiles(jobFolder,extension);
 
   if (!pdfs.length) {
     throw new Error(`No PDFs found in ${jobFolder}`);
@@ -376,13 +417,14 @@ function savePDFsToDrive(jobFolder, DRIVE_OUTPUT_FOLDER_ID) {
 
   pdfs.forEach(name => {
 
-    const blob = downloadFromGitHub(`${jobFolder}/${name}`);
+    const blob = downloadFromGitHub(`${jobFolder}/${name}`, atype);
 
     outputFolder.createFile(blob);
 
   });
 
 }
+*/
 
 function isWorkflowRunning() {
   const owner = CONFIG.GITHUB_OWNER;
@@ -408,4 +450,43 @@ function isWorkflowRunning() {
 
   Logger.log("Workflow running: " + running);
   return running;
+}
+
+function downloadGithubRepoAsZip() {
+  const owner = CONFIG.GITHUB_OWNER;
+  const repo = CONFIG.GITHUB_REPO;
+  const branch = CONFIG.GITHUB_BRANCH;
+  const token = CONFIG.GITHUB_TOKEN;
+
+  const url = `https://api.github.com/repos/${owner}/${repo}/zipball/${branch}`;
+
+  const response = UrlFetchApp.fetch(url, {
+    headers: {
+      Authorization: "token " + token,
+      Accept: "application/vnd.github+json"
+    },
+    muteHttpExceptions: true
+  });
+
+  const code = response.getResponseCode();
+  const contentType = response.getHeaders()["Content-Type"];
+
+  Logger.log("Response code: " + code);
+  Logger.log("Content-Type: " + contentType);
+
+  if (code !== 200) {
+    Logger.log("Error response: " + response.getContentText());
+    return;
+  }
+
+  // 🚨 Critical check
+  if (!contentType || !contentType.includes("zip")) {
+    Logger.log("Not a ZIP! Response was:");
+    Logger.log(response.getContentText().slice(0, 500));
+    return;
+  }
+
+  const zipBlob = response.getBlob().setName("repo.zip");
+
+  return zipBlob;
 }
